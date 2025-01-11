@@ -12,8 +12,6 @@ from fastapi.requests import HTTPConnection
 from .client import RedisDep
 
 
-
-
 class RedisRegistry:
 
     @classmethod
@@ -70,12 +68,10 @@ class RedisRegistry:
             await app.state.REDIS.aclose()
 
 
-
-
 async def depends_redis(
         conn: HTTPConnection
 ) -> RedisDep:
     return conn.app.state.REDIS
 
 
-TRedisPlugin = Annotated[RedisDep, Depends(depends_redis)]
+RedisDependence = Annotated[RedisDep, Depends(depends_redis)]
