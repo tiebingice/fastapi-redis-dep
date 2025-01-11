@@ -1,34 +1,34 @@
 # FastAPI-Redis-Dep（中文）
 
-fastapi-redis-dep 是一个fastapi的redis集成库，提供了利用依赖注入+生命周期的常用中间价集成方式(
-受fastapi_plugins第三方库的启发），使得fastapi中操作redis更为简单。
+`fastapi-redis-dep` 是一个用于 FastAPI 的 Redis 集成库，通过依赖注入和生命周期管理的方式简化了 FastAPI 中 Redis 的操作。该库受
+`fastapi_plugins` 第三方库的启发，提供了常用的中间件集成方式。
 
 ## 安装方式
 
-### PIP
+### 使用 PIP 安装
 
-```
+```bash
 pip install fastapi-redis-dep
 ```
 
-### POETRY
+### 使用 POETRY 安装
 
-```
+```bash
 poetry add fastapi-redis-dep
 ```
 
-## API介绍
+## API 介绍
 
 ### 快速开始
 
-首先安装完成后，你需要在fastapi的生命周期函数中注册本库。
-需要导入RedisRegistry类。
-具体代码如下：
+安装完成后，你需要在 FastAPI 的生命周期函数中注册本库。具体步骤如下：
+
+1. **导入 `RedisRegistry` 类**。
+2. **定义生命周期管理函数 `lifespan`**。
 
 ```python
 from fastapi import FastAPI, Depends
 from contextlib import asynccontextmanager
-
 from fastapi_redis_dep.redis import RedisRegistry, depends_redis
 
 
@@ -38,13 +38,6 @@ async def lifespan(app: FastAPI):
     yield
     await RedisRegistry.terminate(app)
 
-```
-
-完成后，你就可以在fastapi的依赖注入中直接使用redis了。
-
-```python
-from fastapi_redis_dep.client import RedisDep
-from fastapi import FastAPI
 
 app = FastAPI(lifespan=lifespan)
 
@@ -52,17 +45,17 @@ app = FastAPI(lifespan=lifespan)
 @app.get("/")
 async def get_redis(redis: RedisDep = Depends(depends_redis)):
     return await redis.client.ping()
-# 此时访问/路径，如果返回true恭喜你，你的fastapi的redis已经集成完毕，接下来你可以尽情使用redis的API已经本库封装的API。详情请看下面。
 ```
 
-## Redis五大数据结构封装类
+此时访问 `/` 路径，如果返回 `True`，恭喜你，FastAPI 的 Redis 集成已经完成，接下来你可以使用 Redis 的 API 和本库封装的 API。
 
-### string数据结构
+## Redis 五大数据结构封装类
 
-对应的为redis.string.方法
+### String 数据结构
+
+对应方法为 `redis.string.`。
 
 ```python
-
 @app.get("/string")
 async def string(redis: RedisDep = Depends(depends_redis)):
     print(await redis.string.set("test", "test1"))
@@ -86,14 +79,14 @@ async def string(redis: RedisDep = Depends(depends_redis)):
     print(await redis.string.mget("test7", "test8", "test9"))
 ```
 
-### hash数据结构
+### Hash 数据结构
 
-对应的为redis.hash.方法
+对应方法为 `redis.hash.`。
 
 ```python
 @app.get("/hash")
 async def hash(redis: RedisDep = Depends(depends_redis)):
-    # 可以通过添加字典的方式引入hash
+    # 可以通过添加字典的方式引入哈希
     test_data = {
         "field1": "value1",
         "field2": 123,
@@ -105,7 +98,9 @@ async def hash(redis: RedisDep = Depends(depends_redis)):
     print(await redis.hash.exists_field("test_hash", "field1"))
     print(await redis.hash.exists_field("test_hash", "field2"))
 
-    # 同时支持pydantic的方法引入hash
+    # 同时支持 Pydantic 模型引入哈希
+    from pydantic import BaseModel
+
     class TestModel(BaseModel):
         field1: str
         field2: int
@@ -117,13 +112,11 @@ async def hash(redis: RedisDep = Depends(depends_redis)):
     print(await redis.hash.delete_field("test_hash1", "field2"))
     print(await redis.hash.exists_field("test_hash1", "field1"))
     print(await redis.hash.exists_field("test_hash1", "field2"))
-
-    return
 ```
 
-### list数据结构
+### List 数据结构
 
-对应为redis.list.方法
+对应方法为 `redis.list.`。
 
 ```python
 @app.get("/list")
@@ -142,12 +135,11 @@ async def list(redis: RedisDep = Depends(depends_redis)):
 
     async for value in redis.list.list_iterator("test_list"):
         print(value)
-    return ** **
 ```
 
-### set数据结构
+### Set 数据结构
 
-对应为redis.set.方法
+对应方法为 `redis.set.`。
 
 ```python
 @app.get("/set")
@@ -160,21 +152,18 @@ async def set(redis: RedisDep = Depends(depends_redis)):
     print(await redis.set.intersection(["test_set", "another_set"]))
     print(await redis.set.union(["test_set", "another_set"]))
     print(await redis.set.difference(["test_set", "another_set"]))
-    #
+
     # 添加一些数据到 another_set 进行测试
     await redis.set.add("another_set", "b", "c", "d")
-    #
+
     print(await redis.set.intersection(["test_set", "another_set"]))
     print(await redis.set.union(["test_set", "another_set"]))
     print(await redis.set.difference(["test_set", "another_set"]))
-
-    return
-
 ```
 
-### zset数据结构
+### Sorted Set 数据结构
 
-对应为redis.zset.方法
+对应方法为 `redis.zset.`。
 
 ```python
 @app.get("/zset")
@@ -187,15 +176,14 @@ async def zset(redis: RedisDep = Depends(depends_redis)):
     print(await redis.zset.range_by_score("test_zset", 1.0, 3.1, withscores=True))
     print(await redis.zset.rank("test_zset", "a"))
     print(await redis.zset.rank("test_zset", "c", reverse=True))
-
-    return
 ```
 
 ## 缓存的使用
 
-在redisdep类下的string对象用有对缓存的基本使用即set_cache和get_cache，请注意这个缓存只能用于缓存基本数据类型以及python中的pydantic对象。
-底层使用orjson做json序列化，因此能够缓存的对象即为orjson能够缓存的对象。同时由于重写了default函数，因此也能够缓存pydantic对象。
-如果要缓存比较复杂的对象例如tortoise-orm的orm对象，请使用 **cashews**(https://pypi.org/project/cashews/)等第三方缓存工具
+`RedisDep` 类下的 `string` 对象提供了缓存的基本操作，如 `set_cache` 和 `get_cache`。请注意，这些缓存只能用于基本数据类型和
+Python 中的 Pydantic 对象。底层使用 `orjson` 进行 JSON 序列化，因此能够缓存的对象即为 `orjson` 支持的对象。同时由于重写了
+`default` 函数，因此也能够缓存 Pydantic 对象。如果要缓存更复杂的对象（例如 Tortoise-ORM 的 ORM
+对象），请使用第三方缓存工具如 [cashews](https://pypi.org/project/cashews/)。
 
 ## 锁机制
 
@@ -206,47 +194,37 @@ async def lock(redis: RedisDep = Depends(depends_redis)):
         print("locked")
 ```
 
-底层使用redis-lock-py，因此可以通过使用redis-lock-py进行锁的操作。该函数就做了下面这件事情
-
-```python
-def lock(self, name: str, timeout: int = 10):
-    return RedisLock(self._client, name, blocking_timeout=timeout)
-
-```
-
-综上所述，你可以使用redis-lock-py来创建锁，然后使用redis.client来操作redis。
+底层使用 `redis-lock-py` 实现分布式锁。你可以通过 `redis-lock-py` 创建锁，并使用 `redis.client` 操作 Redis。
 
 ## 管道
 
 ```python
-@app.get("/pipline")
-async def pipline(redis: RedisDep = Depends(depends_redis)):
+@app.get("/pipeline")
+async def pipeline(redis: RedisDep = Depends(depends_redis)):
     async with redis.pipe() as pipe:
-        await pipe.set("test_pipline", "test_pipline")
+        await pipe.set("test_pipeline", "test_pipeline")
         await pipe.get("test")
-        print(await pipe.get("test_pipline"))
-        print(await pipe.get("test_pipline"))
-
-    return
+        print(await pipe.get("test_pipeline"))
+        print(await pipe.get("test_pipeline"))
 ```
 
-## 获取redis原生操作
+## 获取 Redis 原生操作
 
 ```python
 @app.get("/redis")
 async def redis(redis: RedisDep = Depends(depends_redis)):
     print(redis.client.get("test"))
-    return
 ```
 
-上述为原生的操作，在目前封装的函数不满足使用情况的时候可以使用，否则建议使用封装后的函数。
+上述为原生的操作，在当前封装的函数不满足需求时可以使用，否则建议使用封装后的函数。
 
-## 设置Redis配置
+## 设置 Redis 配置
 
-需要引入RedisSettings类
-如下是redis_settings
+需要引入 `RedisSettings` 类来配置 Redis 连接参数。RedisSettings的实现如下：
 
 ```python
+from pydantic import BaseSettings
+
 
 class RedisSettings(BaseSettings):
     redis_ssl: bool = False
@@ -264,39 +242,66 @@ class RedisSettings(BaseSettings):
 
     redis_ttl: int = 3600
 
+    def get_redis_address(self) -> str:
+        socket_conn = "redis"
+
+        if self.redis_ssl:
+            socket_conn = "rediss"
+
+        if self.redis_url:
+            return self.redis_url
+        elif self.redis_db:
+            return f'{socket_conn}://{self.redis_host}:{self.redis_port}/{self.redis_db}'
+        else:
+            return f'{socket_conn}://{self.redis_host}:{self.redis_port}'
+
 ```
 
-你可以创建一个settings.py文件，然后导入这个类。在环境变量文件书写配置参数，然后实现一个配置类，然后通过一个方法输出该类。
+你可以创建一个 `settings.py` 文件，然后导入这个类。通过这个类实例化对象，实例化时请传入要修改的配置，可以通过一个方法输出这个对象本身。
+例如：
 
 ```python
-return RedisSettings(
-    redis_url=self.redis_url,
-    redis_host=self.redis_host,
-    redis_port=self.redis_port,
-    redis_user=self.redis_user,
-    redis_password=self.redis_password
-)
+def get_redis_settings():
+    return RedisSettings(
+        redis_url=redis_url,
+        redis_host=redis_host,
+        redis_port=redis_port,
+        redis_user=redis_user,
+        redis_password=redis_password
+    )
 ```
+
+## 简写方式
+
+fastapi-redis-dep同时提供了简写方式，需要导入RedisDependence，这是一个注解，通过它你可以快速引入Redis的依赖注入，而无需使用上面的方法。
+例如：
+```python
+@app.get("/redis")
+async def redis(redis: RedisDependence):
+    print(redis.client.get("test"))
+```
+
+在这个例子中，RedisDependence注解用于快速引入Redis的依赖注入，简化了代码。
 
 ---
 
-# FastAPI-Redis-Dep（English)
+# FastAPI-Redis-Dep (English)
 
-fastapi-redis-dep is a Redis integration library for FastAPI that provides common middleware integration using
-dependency injection + lifecycle (inspired by the third-party library fastapi_plugins), making it easier to operate
-Redis within FastAPI.
+`fastapi-redis-dep` is a Redis integration library for FastAPI that provides common middleware integration using
+dependency injection and lifecycle management (inspired by the third-party library `fastapi_plugins`). This makes it
+easier to operate Redis within FastAPI.
 
 ## Installation Method
 
-### PIP
+### Using PIP
 
-```
+```bash
 pip install fastapi-redis-dep
 ```
 
-### POETRY
+### Using POETRY
 
-```
+```bash
 poetry add fastapi-redis-dep
 ```
 
@@ -304,14 +309,14 @@ poetry add fastapi-redis-dep
 
 ### Quick Start
 
-After installation, you need to register this library in the lifecycle functions of FastAPI.
-You need to import the RedisRegistry class.
-The specific code is as follows:
+After installation, you need to register this library in the lifecycle functions of FastAPI. Specifically:
+
+1. **Import the `RedisRegistry` class**.
+2. **Define the `lifespan` function**.
 
 ```python
 from fastapi import FastAPI, Depends
 from contextlib import asynccontextmanager
-
 from fastapi_redis_dep.redis import RedisRegistry, depends_redis
 
 
@@ -321,13 +326,6 @@ async def lifespan(app: FastAPI):
     yield
     await RedisRegistry.terminate(app)
 
-```
-
-Once completed, you can directly use Redis in FastAPI's dependency injection.
-
-```python
-from fastapi_redis_dep.client import RedisDep
-from fastapi import FastAPI
 
 app = FastAPI(lifespan=lifespan)
 
@@ -335,17 +333,18 @@ app = FastAPI(lifespan=lifespan)
 @app.get("/")
 async def get_redis(redis: RedisDep = Depends(depends_redis)):
     return await redis.client.ping()
-# At this point, accessing the / path, if it returns true, congratulations, your FastAPI has successfully integrated with Redis. Next, you can freely use Redis APIs and the APIs encapsulated by this library. See below for details.
 ```
+
+At this point, accessing the `/` path, if it returns `True`, congratulations! Your FastAPI has successfully integrated
+with Redis. You can now use Redis APIs and the APIs encapsulated by this library. For more details, see below.
 
 ## Five Major Redis Data Structure Encapsulation Classes
 
 ### String Data Structure
 
-Corresponding to the redis.string methods
+Corresponding methods are under `redis.string.`.
 
 ```python
-
 @app.get("/string")
 async def string(redis: RedisDep = Depends(depends_redis)):
     print(await redis.string.set("test", "test1"))
@@ -371,12 +370,12 @@ async def string(redis: RedisDep = Depends(depends_redis)):
 
 ### Hash Data Structure
 
-Corresponding to the redis.hash methods
+Corresponding methods are under `redis.hash.`.
 
 ```python
 @app.get("/hash")
 async def hash(redis: RedisDep = Depends(depends_redis)):
-    # You can introduce a hash by adding a dictionary
+    # Introduce a hash by adding a dictionary
     test_data = {
         "field1": "value1",
         "field2": 123,
@@ -388,7 +387,9 @@ async def hash(redis: RedisDep = Depends(depends_redis)):
     print(await redis.hash.exists_field("test_hash", "field1"))
     print(await redis.hash.exists_field("test_hash", "field2"))
 
-    # It also supports introducing a hash via Pydantic methods
+    # Also supports introducing a hash via Pydantic models
+    from pydantic import BaseModel
+
     class TestModel(BaseModel):
         field1: str
         field2: int
@@ -400,13 +401,11 @@ async def hash(redis: RedisDep = Depends(depends_redis)):
     print(await redis.hash.delete_field("test_hash1", "field2"))
     print(await redis.hash.exists_field("test_hash1", "field1"))
     print(await redis.hash.exists_field("test_hash1", "field2"))
-
-    return
 ```
 
 ### List Data Structure
 
-Corresponding to the redis.list methods
+Corresponding methods are under `redis.list.`.
 
 ```python
 @app.get("/list")
@@ -425,12 +424,11 @@ async def list(redis: RedisDep = Depends(depends_redis)):
 
     async for value in redis.list.list_iterator("test_list"):
         print(value)
-    return ** **
 ```
 
 ### Set Data Structure
 
-Corresponding to the redis.set methods
+Corresponding methods are under `redis.set.`.
 
 ```python
 @app.get("/set")
@@ -443,21 +441,18 @@ async def set(redis: RedisDep = Depends(depends_redis)):
     print(await redis.set.intersection(["test_set", "another_set"]))
     print(await redis.set.union(["test_set", "another_set"]))
     print(await redis.set.difference(["test_set", "another_set"]))
-    #
+
     # Add some data to another_set for testing
     await redis.set.add("another_set", "b", "c", "d")
-    #
+
     print(await redis.set.intersection(["test_set", "another_set"]))
     print(await redis.set.union(["test_set", "another_set"]))
     print(await redis.set.difference(["test_set", "another_set"]))
-
-    return
-
 ```
 
-### ZSet Data Structure
+### Sorted Set Data Structure
 
-Corresponding to the redis.zset methods
+Corresponding methods are under `redis.zset.`.
 
 ```python
 @app.get("/zset")
@@ -470,18 +465,16 @@ async def zset(redis: RedisDep = Depends(depends_redis)):
     print(await redis.zset.range_by_score("test_zset", 1.0, 3.1, withscores=True))
     print(await redis.zset.rank("test_zset", "a"))
     print(await redis.zset.rank("test_zset", "c", reverse=True))
-
-    return
 ```
 
 ## Cache Usage
 
-The string object under the RedisDep class has basic cache usage through set_cache and get_cache. Please note that this
-cache can only be used for caching primitive data types and Python's Pydantic objects.
-The underlying implementation uses orjson for JSON serialization, so the objects that can be cached are those that
-orjson can serialize. Since the default function has been overridden, Pydantic objects can also be cached.
-If you want to cache more complex objects such as Tortoise-ORM ORM objects, please use third-party caching tools like *
-*cashews**(https://pypi.org/project/cashews/).
+The `string` object under the `RedisDep` class provides basic cache operations such as `set_cache` and `get_cache`. Note
+that this cache can only be used for caching primitive data types and Python's Pydantic objects. The underlying
+implementation uses `orjson` for JSON serialization, so the objects that can be cached are those that `orjson` can
+serialize. Since the `default` function has been overridden, Pydantic objects can also be cached. If you want to cache
+more complex objects such as Tortoise-ORM ORM objects, please use third-party caching tools
+like [cashews](https://pypi.org/project/cashews/).
 
 ## Lock Mechanism
 
@@ -492,16 +485,15 @@ async def lock(redis: RedisDep = Depends(depends_redis)):
         print("locked")
 ```
 
-Under the hood, it uses redis-lock-py, so you can perform lock operations using redis-lock-py. This function essentially
-does the following:
+Under the hood, it uses `redis-lock-py`, so you can perform lock operations using `redis-lock-py`. This function
+essentially does the following:
 
 ```python
 def lock(self, name: str, timeout: int = 10):
     return RedisLock(self._client, name, blocking_timeout=timeout)
-
 ```
 
-In summary, you can create locks using redis-lock-py and then operate on Redis using the redis.client.
+In summary, you can create locks using `redis-lock-py` and then operate on Redis using the `redis.client`.
 
 ## Pipelines
 
@@ -513,8 +505,6 @@ async def pipeline(redis: RedisDep = Depends(depends_redis)):
         await pipe.get("test")
         print(await pipe.get("test_pipeline"))
         print(await pipe.get("test_pipeline"))
-
-    return
 ```
 
 ## Accessing Native Redis Operations
@@ -523,7 +513,6 @@ async def pipeline(redis: RedisDep = Depends(depends_redis)):
 @app.get("/redis")
 async def redis(redis: RedisDep = Depends(depends_redis)):
     print(redis.client.get("test"))
-    return
 ```
 
 The above represents native operations, which should be used when the current encapsulated functions do not meet your
@@ -531,10 +520,12 @@ needs; otherwise, it is recommended to use the encapsulated functions.
 
 ## Setting Redis Configuration
 
-You need to import the RedisSettings class.
-Below is an example of redis_settings:
+YTo configure Redis connection parameters, you need to introduce the RedisSettings class. The implementation of
+RedisSettings is as follows:
 
 ```python
+from pydantic import BaseSettings
+
 
 class RedisSettings(BaseSettings):
     redis_ssl: bool = False
@@ -552,17 +543,47 @@ class RedisSettings(BaseSettings):
 
     redis_ttl: int = 3600
 
+    def get_redis_address(self) -> str:
+        socket_conn = "redis"
+
+        if self.redis_ssl:
+            socket_conn = "rediss"
+
+        if self.redis_url:
+            return self.redis_url
+        elif self.redis_db:
+            return f'{socket_conn}://{self.redis_host}:{self.redis_port}/{self.redis_db}'
+        else:
+            return f'{socket_conn}://{self.redis_host}:{self.redis_port}'
+
 ```
 
-You can create a settings.py file, then import this class. Write configuration parameters in an environment variable
-file, implement a configuration class, and output this class through a method.
+You can create a settings.py file and import this class. Instantiate the class with the configurations you want to
+modify. You can output this object itself through a method. For example:
 
 ```python
-return RedisSettings(
-    redis_url=self.redis_url,
-    redis_host=self.redis_host,
-    redis_port=self.redis_port,
-    redis_user=self.redis_user,
-    redis_password=self.redis_password
-)
+def get_redis_settings():
+    return RedisSettings(
+        redis_url=redis_url,
+        redis_host=redis_host,
+        redis_port=redis_port,
+        redis_user=redis_user,
+        redis_password=redis_password
+    )
 ```
+
+## Abbreviation Method
+
+fastapi-redis-dep also provides a shorthand way, which requires importing RedisDependence. This is a decorator that
+allows you to quickly inject Redis dependencies without using the method described above.
+For example:
+
+```python
+@app.get("/redis")
+async def redis(redis: RedisDependence):
+    print(redis.client.get("test"))
+```
+
+In this example, the RedisDependence decorator is used to quickly inject Redis dependencies, simplifying the code.
+
+---
