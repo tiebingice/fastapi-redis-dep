@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "fastapi-redis-dep"
+version = "0.2.0"
+description = "fastapi-redis-dep is a library that integrates Redis dependencies into FastAPI, making it easier to work with Redis in FastAPI."
+authors = ["tiebingice"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.115.6"
+uvicorn = "^0.34.0"
+redis = { extras = ["hiredis"], version = "^5.2.1" }
+pydantic-settings = "^2.7.0"
+tenacity = ">=8.3.0 <9.0.0"
+redis-lock-py = "^1.1.1"
+orjson = "^3.10.14"
+requests = "^2.32.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
