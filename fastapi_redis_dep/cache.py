@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Any, TypeVar, Optional, cast
+from typing import Any, TypeVar, Optional
 from pydantic import BaseModel
 
 from redis.asyncio import Redis
@@ -7,6 +7,8 @@ import orjson
 
 
 T = TypeVar('T', bound=BaseModel)
+
+
 
 def default(obj: Any) -> str:
     """Serialize Pydantic model objects to JSON strings.
@@ -45,6 +47,7 @@ async def set_cache(
             (isinstance(expire, int) and expire < 0)
         ):
             return False
+       
 
         value_json = orjson.dumps(
             value,

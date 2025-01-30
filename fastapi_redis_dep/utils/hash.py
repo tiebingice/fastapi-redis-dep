@@ -1,8 +1,11 @@
-from typing import Any, cast
+from typing import Any, cast,Awaitable,TypeVar
+
 
 from redis.asyncio import Redis
 from pydantic import BaseModel
-import orjson
+
+
+T = TypeVar('T', bound=BaseModel)
 
 
 class RedisHash:
@@ -10,34 +13,39 @@ class RedisHash:
         self._client = client
 
 
-    async def set_hash(self, key: str, data: dict[str, Any] | BaseModel) -> None:
+    async def set_hash(self, key: str, data: dict[str, Any] | BaseModel) -> bool:
         if isinstance(data, BaseModel):
             data = data.model_dump()
+        
+        set_data = {}
+        
+        for k, v in data.items():
+            if isinstance(v, BaseModel):
+                data[k] = v.model_dump()
+            
+            if not isinstance(v, (str, bytes, int, float)) or isinstance(v, bool):
+                v = str(v)
+            set_data[k] = v
+        
 
-        serialized_data = {
-            k: orjson.dumps(v) if not isinstance(v, bytes) else v 
-            for k, v in data.items()
-        }
-        await cast(Any, self._client).hset(name=key, mapping=serialized_data)
+        return await cast(Awaitable[int], self._client.hset(name=key, mapping=set_data)) == 1
 
 
+    async def get_hash(self, key: str, bind_pydantic_model: type[T] | None = None) -> dict[str, Any]|T:
 
-    async def get_hash(self, key: str, bind_pydantic_model: type[BaseModel] | None = None) -> dict[str, Any]|BaseModel:
-        data = await cast(Any, self._client).hgetall(name=key)
+        data = await cast(Awaitable[dict[str, Any]], self._client.hgetall(name=key))
+        
         if not data:
             raise KeyError(f"Key '{key}' does not exist.")
 
-        deserialized_data = {
-            k.decode() if isinstance(k, bytes) else k: orjson.loads(v) if isinstance(v, bytes) else v
-            for k, v in data.items()
-        }
-        if bind_pydantic_model:
-            return bind_pydantic_model.model_validate(deserialized_data)
 
-        return deserialized_data
+        if bind_pydantic_model:
+            return bind_pydantic_model.model_validate(data)
+
+        return data
 
     async def delete_field(self, key: str, *field: str) -> int:
-        return await cast(Any, self._client).hdel(key, *field)
+        return await cast(Awaitable[int], self._client.hdel(key, *field))
 
     async def exists_field(self, key: str, field: str) -> bool:
-        return await cast(Any, self._client).hexists(key, field)
+        return await cast(Awaitable[bool], self._client.hexists(key, field))
