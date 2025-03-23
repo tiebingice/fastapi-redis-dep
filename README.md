@@ -17,6 +17,11 @@ pip install fastapi-redis-dep
 poetry add fastapi-redis-dep
 ```
 
+### 使用UV安装
+```bash
+uv add fastapi-redis-dep
+```
+
 ## API 介绍
 
 ### 快速开始
