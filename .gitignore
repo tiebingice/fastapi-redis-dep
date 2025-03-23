@@ -3,3 +3,4 @@ poetry.lock
 dist
 __pycache__
 main.py
+.idea
