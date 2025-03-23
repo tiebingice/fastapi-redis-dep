@@ -6,8 +6,7 @@ from redis.asyncio import Redis
 import orjson
 
 
-T = TypeVar('T', bound=BaseModel)
-
+T = TypeVar("T", bound=BaseModel)
 
 
 def default(obj: Any) -> str:
@@ -25,10 +24,7 @@ def default(obj: Any) -> str:
 
 
 async def set_cache(
-    client: Redis,
-    key: str,
-    value: Any,
-    expire: Optional[int | timedelta] = None
+    client: Redis, key: str, value: Any, expire: Optional[int | timedelta] = None
 ) -> bool:
     """Set cache value.
 
@@ -43,31 +39,28 @@ async def set_cache(
     """
     try:
         if expire is not None and (
-            not isinstance(expire, (int, timedelta)) or 
-            (isinstance(expire, int) and expire < 0)
+            not isinstance(expire, (int, timedelta))
+            or (isinstance(expire, int) and expire < 0)
         ):
             return False
-       
 
         value_json = orjson.dumps(
             value,
-            option=orjson.OPT_SERIALIZE_NUMPY | 
-                   orjson.OPT_SERIALIZE_UUID | 
-                   orjson.OPT_PASSTHROUGH_DATACLASS,
-            default=default
+            option=orjson.OPT_SERIALIZE_NUMPY
+            | orjson.OPT_SERIALIZE_UUID
+            | orjson.OPT_PASSTHROUGH_DATACLASS,
+            default=default,
         )
         await client.set(key, value_json, expire)
         return True
-    except orjson.JSONEncodeError as e:
+    except orjson.JSONEncodeError as e:  # noqa: F841
         return False
-    except Exception as e:
+    except Exception as e:  # noqa: F841
         return False
 
 
 async def get_cache(
-    client: Redis,
-    key: str,
-    bind_pydantic_model: Optional[type[T]] = None
+    client: Redis, key: str, bind_pydantic_model: Optional[type[T]] = None
 ) -> Optional[Any | T]:
     """Get cached value.
 
@@ -93,7 +86,7 @@ async def get_cache(
             return bind_pydantic_model.model_validate_json(value_json)
         return value_json
 
-    except orjson.JSONDecodeError as e:
+    except orjson.JSONDecodeError as e:  # noqa: F841
         return value
-    except Exception as e:
+    except Exception as e:  # noqa: F841
         return None

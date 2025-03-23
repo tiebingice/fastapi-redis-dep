@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fastapi-redis-dep"
-version = "0.3.1"
+version = "0.3.2"
 description = "fastapi-redis-dep is a library that integrates Redis dependencies into FastAPI, making it easier to work with Redis in FastAPI."
 authors = ["tiebingice"]
 readme = "README.md"

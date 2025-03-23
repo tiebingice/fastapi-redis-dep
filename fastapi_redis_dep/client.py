@@ -12,6 +12,7 @@ from contextlib import asynccontextmanager
 from redis_lock.asyncio import RedisLock
 from typing import Awaitable, cast
 
+
 class RedisDep:
     def __init__(self, client: Redis):
         self._client = client
@@ -58,26 +59,26 @@ class RedisDep:
     def lock(self, name: str, timeout: int = 10) -> RedisLock:
         return RedisLock(self._client, name, blocking_timeout=timeout)
 
-
     async def expire(self, key: str, time_seconds: int | timedelta) -> bool:
         """Set the expiration time for a key.
-        
+
         Args:
             key: Redis key
             time_seconds: Expiration time, can be seconds or a timedelta object
-        
+
         Returns:
             bool: Whether the operation was successful
         """
-        
+
         return await cast(Awaitable[bool], self._client.expire(key, time_seconds))
-    
+
     async def delete(self, key: str) -> bool:
-        """Delete a key from Redis.
-        
+        """
+        Delete a key from Redis.
+
         Args:
             key: Redis key to be deleted
-        
+
         Returns:
             bool: Whether the deletion was successful
         """
